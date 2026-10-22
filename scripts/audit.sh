@@ -34,9 +34,8 @@ check "Политика по умолчанию для входящего тра
 
 echo "[3] Учётные записи"
 awk -F: '$3>=1000 && $3<65534 {printf " %s (uid=%s)\n",$1,$3}' /etc/passwd
-echo "Пройдено: $PASS, не пройдено: $FAIL"
-[[ $FAIL -eq 0 ]] && exit 0 || exit 1
 
+# --- БЛОК 4 ДОЛЖЕН БЫТЬ ЗДЕСЬ ---
 echo "[4] Веб-сервер"
 
 # а) Служба nginx активна
@@ -50,7 +49,6 @@ else
 fi
 
 # в) Сертификат истекает не ранее чем через 30 дней
-# openssl -checkend 2592000 возвращает 0, если сертификат действителен более 30 дней (30*24*60*60)
 if openssl x509 -checkend 2592000 -noout -in /etc/ssl/certs/devops.crt > /dev/null 2>&1; then
     echo " [OK]  Сертификат действителен более 30 дней"; ((PASS++))
 else
@@ -65,10 +63,14 @@ if [[ -z "$WWW_PERMS" && "$KEY_PERMS" == "600" ]]; then
     echo " [OK]  Права на файлы ресурса и ключ безопасны"; ((PASS++))
 else
     if [[ -n "$WWW_PERMS" ]]; then
-        echo " [FAIL] Найдены файлы с правом записи для всех: $WWW_PERMS"; 
+        echo " [FAIL] Найдены файлы с правом записи для всех: $WWW_PERMS";
     fi
     if [[ "$KEY_PERMS" != "600" ]]; then
-        echo " [FAIL] Права на ключ не равны 600 (текущие: $KEY_PERMS)"; 
+        echo " [FAIL] Права на ключ не равны 600 (текущие: $KEY_PERMS)";
     fi
     ((FAIL++))
 fi
+# --- КОНЕЦ БЛОКА 4 ---
+
+echo "Пройдено: $PASS, не пройдено: $FAIL"
+[[ $FAIL -eq 0 ]] && exit 0 || exit 1
