@@ -44,7 +44,7 @@ fi
 
 # 5. Проверка доступности ресурса (Требование 6)
 # curl -f заставляет curl вернуть ошибку (код 22) при HTTP-статусах 4xx и 5xx
-if ! curl -fsS --cacert "${CA_CERT}" "${SITE_URL}" > /dev/null; then
+if ! curl -fsS -m 5 --cacert "${CA_CERT}" "${SITE_URL}" > /dev/null; then
     echo "Ошибка: ресурс ${SITE_URL} недоступен после деплоя!" >&2
     exit 1
 fi
