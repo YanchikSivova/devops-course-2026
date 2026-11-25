@@ -1,0 +1,6 @@
+---
+app_image: "ghcr.io/yanchiksivova/devops-ci-app"
+app_tag: "b826a2813e77a988c9b9b4ddfbb0c1011d871414"
+app_container_name: "devops-ci-app"
+app_host_port: 5000
+app_internal_port: 5000
