@@ -90,3 +90,24 @@ sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     *   Nginx на VM: `0.0.0.0:80` и `0.0.0.0:443`.
 *   **Именованные тома:** `app_db_data` (для хранения данных PostgreSQL).
 *   **Конфигурация обратного прокси-сервера:** Nginx перенаправляет запросы с `https://devops.local/app/` на `http://127.0.0.1:5000/` (контейнер с приложением).
+
+## 10. Ansible
+
+* **Расположение проекта:** `~/devops-course-2026/ansible` в WSL Ubuntu.
+* **Управляющий узел:** WSL Ubuntu на рабочем компьютере. **Управляемый узел:** VM `devops-vm` (Ubuntu Server 24.04 amd64), адрес `192.168.56.101`.
+* **Inventory:** `inventory/bootstrap.ini` используется при первичной настройке, `inventory/prod.ini` — для дальнейшей работы под созданной учётной записью.
+* **Учётные записи:** bootstrap-подключение выполняется под `vboxuser`; production-подключение — под `devops`. Ansible устанавливает открытый SSH-ключ для `devops` и настраивает ему sudo без пароля. Закрытый ключ хранится только на управляющем узле и в репозиторий не добавляется.
+* **Роли:** `base` проверяет платформу и устанавливает базовые пакеты и Docker Engine; `ssh` создаёт `devops`, настраивает SSH, sudo и UFW; `nginx` настраивает обратный прокси; `app` загружает закреплённый образ, запускает контейнер и проверяет его доступность.
+* **Образ приложения:** `ghcr.io/yanchiksivova/devops-ci-app:b826a2813e77a988c9b9b4ddfbb0c1011d871414`. Используется полный SHA `b826a2813e77a988c9b9b4ddfbb0c1011d871414`, а не изменяемый тег `latest`.
+* **Порт контейнера:** `127.0.0.1:5000` на VM перенаправляется на порт `5000` контейнера и не публикуется напрямую на внешние интерфейсы. Nginx принимает HTTP на порту 80.
+* **Health endpoint:** `GET /health`; прямой адрес на VM — `http://127.0.0.1:5000/health`, внешний — `http://192.168.56.101/health`.
+* **Первичная установка и последующий запуск** выполняются из каталога Ansible:
+
+  ```bash
+  cd ~/devops-course-2026/ansible
+  ansible-galaxy collection install -r requirements.yml
+  ansible-playbook -i inventory/bootstrap.ini site.yml --ask-become-pass
+  ansible-playbook -i inventory/prod.ini site.yml
+  ```
+
+* **Read-only аудит конфигурации:** `ansible-playbook -i inventory/prod.ini verify.yml`. Он проверяет SSH, состояние контейнера и health endpoint, не применяя конфигурацию.
